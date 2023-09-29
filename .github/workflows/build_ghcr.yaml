@@ -14,6 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        type: [builder, user]
         ubuntu: [focal, jammy]
         platform: [linux/amd64]
 
@@ -26,7 +27,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ghcr.io/${{ github.repository }}-builder
+          images: ghcr.io/${{ github.repository }}-${{ matrix.type }}
           tags: |
             type=raw,value=${{ matrix.ubuntu }}
 
@@ -59,7 +60,7 @@ jobs:
         with:
           build-args: |
             UBUNTU_TAG=${{matrix.ubuntu}}
-          file: builder.Dockerfile
+          file: ${{ matrix.type }}.Dockerfile
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=${{ steps.vars.outputs.container }},push-by-digest=true,name-canonical=true,push=true
           platforms: ${{matrix.platform}}
@@ -147,7 +148,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ghcr.io/${{ github.repository }}-builder
+          images: ghcr.io/${{ github.repository }}-${{ matrix.type }}
           tags: |
             type=raw,value=${{ matrix.ubuntu }}
 
