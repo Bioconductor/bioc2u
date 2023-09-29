@@ -99,14 +99,14 @@ jobs:
       - name: Export digest by ubuntu and r versions
         run: |
           digest="${{ steps.build.outputs.digest }}"
-          mkdir -p /tmp/digests/${{matrix.ubuntu}}
-          touch "/tmp/digests/${{matrix.ubuntu}}/${digest#sha256:}"
-          mkdir -p /tmp/digests/${{matrix.ubuntu}}-r-${{steps.versions.outputs.rver}}
-          touch "/tmp/digests/${{matrix.ubuntu}}-r-${{steps.versions.outputs.rver}}/${digest#sha256:}"
-          mkdir -p /tmp/digests/${{steps.versions.outputs.osver}}
-          touch "/tmp/digests/${{steps.versions.outputs.osver}}/${digest#sha256:}"
-          mkdir -p /tmp/digests/${{steps.versions.outputs.osver}}-r-${{steps.versions.outputs.rver}}
-          touch "/tmp/digests/${{steps.versions.outputs.osver}}-r-${{steps.versions.outputs.rver}}/${digest#sha256:}"
+          mkdir -p /tmp/digests/${{matrix.type}}/${{matrix.ubuntu}}
+          touch "/tmp/digests/${{matrix.type}}/${{matrix.ubuntu}}/${digest#sha256:}"
+          mkdir -p /tmp/digests/${{matrix.type}}/${{matrix.ubuntu}}-r-${{steps.versions.outputs.rver}}
+          touch "/tmp/digests/${{matrix.type}}/${{matrix.ubuntu}}-r-${{steps.versions.outputs.rver}}/${digest#sha256:}"
+          mkdir -p /tmp/digests/${{matrix.type}}/${{steps.versions.outputs.osver}}
+          touch "/tmp/digests/${{matrix.type}}/${{steps.versions.outputs.osver}}/${digest#sha256:}"
+          mkdir -p /tmp/digests/${{matrix.type}}/${{steps.versions.outputs.osver}}-r-${{steps.versions.outputs.rver}}
+          touch "/tmp/digests/${{matrix.type}}/${{steps.versions.outputs.osver}}-r-${{steps.versions.outputs.rver}}/${digest#sha256:}"
 
       - name: Upload digests
         uses: actions/upload-artifact@v3
@@ -160,6 +160,6 @@ jobs:
 
       - name: Create manifest list and push
         run: |
-          cd /tmp/digests
+          cd /tmp/digests/${{matrix.type}}
           ls --hide=digestdirs > digestdirs
           cat digestdirs | xargs -i bash -c 'docker buildx imagetools create -t ${{steps.vars.outputs.container}}:{} $(for f in {}/*; do basename "$f"; done | xargs printf "${{steps.vars.outputs.container}}@sha256:%s ")'
