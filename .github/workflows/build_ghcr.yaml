@@ -125,6 +125,7 @@ jobs:
       fail-fast: false
       matrix:
         ubuntu: [focal, jammy]
+        type: [builder, user]
     steps:
       - name: Download digests
         uses: actions/download-artifact@v3
