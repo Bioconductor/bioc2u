@@ -27,9 +27,9 @@ By default, the `r-core-base` installation (provided by the r2u project), uses t
 when installing packages from within R via `install.packages()` or `BiocManager::install()`. You may thus continue to use R as you would outside of this
 environment, and observe the speedup resulting from R using the `apt` package manager under the hood.
 
-### Status / TODOs (alpha)
-- 1800+ packages built for ubuntu jammy
+### Done & TODOs (alpha)
+- [x[ 3439 packages built for 3.17 and ubuntu jammy (software packages + dependent annotation/experiment packages)
   - TODO: Build for ubuntu focal
   - TODO: Collect failure logs, then address common errors and missing build-dependencies
-- Repository public without signed key (TODO: gpg key and update repository)
-- Repository hosted on JS2 (TODO: host on OSN)
+  - TODO: Build for 3.18
+- [x] Repository with signature hosted on OSN
