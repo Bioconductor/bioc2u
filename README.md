@@ -28,7 +28,7 @@ when installing packages from within R via `install.packages()` or `BiocManager:
 environment, and observe the speedup resulting from R using the `apt` package manager under the hood.
 
 ### Done & TODOs (alpha)
-- [x[ 3439 packages built for 3.17 and ubuntu jammy (software packages + dependent annotation/experiment packages)
+- [x] 3439 packages built for 3.17 and ubuntu jammy (software packages + dependent annotation/experiment packages)
   - TODO: Build for ubuntu focal
   - TODO: Collect failure logs, then address common errors and missing build-dependencies
   - TODO: Build for 3.18
