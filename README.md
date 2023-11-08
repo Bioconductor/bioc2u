@@ -3,7 +3,7 @@
 This project aims to extend [r2u](https://github.com/eddelbuettel/r2u),
 in hopes of providing a repository of Ubuntu binaries via `apt` for all Bioconductor packages.
 
-**Bioc2u is current only available for Ubuntu Jammy and is still in alpha development.**
+**Bioc2u is currently only available for Ubuntu Jammy and is still in alpha development.**
 
 ### Getting started
 
@@ -21,7 +21,7 @@ apt install -y --no-install-recommends curl ca-certificates
 curl https://raw.githubusercontent.com/Bioconductor/bioc2u/devel/apt_setup.sh | sudo bash
 ```
 After the initial setup, you may use `apt` or `install.packages()` freely. Installing packages through `apt` can be done in any shell session, by using the
-`r-bioc-` prefix and the all-lowercase name of the package, eg `apt install -y r-bioc-biocmanager`. You may alternatively continue to use R traditionally.
+`r-bioc-` prefix and the all-lowercase name of the package, eg `apt install -y r-bioc-genomicranges`. You may alternatively continue to use R traditionally.
 
 By default, the `r-core-base` installation (provided by the r2u project), uses the [`bspm`](https://cran.r-project.org/web/packages/bspm/index.html) package to enable the usage of the package manager
 when installing packages from within R via `install.packages()` or `BiocManager::install()`. You may thus continue to use R as you would outside of this
