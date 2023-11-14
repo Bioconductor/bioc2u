@@ -17,6 +17,7 @@ jobs:
         type: [builder, user]
         ubuntu: [focal, jammy]
         platform: [linux/amd64]
+        biocversion: ['3.18']
 
     name: Build container images for GHCR
     runs-on: ubuntu-latest
@@ -60,6 +61,7 @@ jobs:
         with:
           build-args: |
             UBUNTU_TAG=${{matrix.ubuntu}}
+            BIOC_VERSION=${{matrix.biocversion}}
           file: ${{ matrix.type }}.Dockerfile
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=${{ steps.vars.outputs.container }},push-by-digest=true,name-canonical=true,push=true
@@ -96,7 +98,7 @@ jobs:
           echo rver=$(cat rver | awk 'NR==1{print $3}') >> $GITHUB_OUTPUT
           echo osver=$(awk -F= '/VERSION_ID/ {gsub("\"", "", $2); print $2}' os-release) >> $GITHUB_OUTPUT
 
-      - name: Export digest by ubuntu and r versions
+      - name: Export digest by ubuntu, r, and bioc versions
         run: |
           digest="${{ steps.build.outputs.digest }}"
           mkdir -p /tmp/digests/${{matrix.type}}/${{matrix.ubuntu}}
@@ -107,6 +109,16 @@ jobs:
           touch "/tmp/digests/${{matrix.type}}/${{steps.versions.outputs.osver}}/${digest#sha256:}"
           mkdir -p /tmp/digests/${{matrix.type}}/${{steps.versions.outputs.osver}}-r-${{steps.versions.outputs.rver}}
           touch "/tmp/digests/${{matrix.type}}/${{steps.versions.outputs.osver}}-r-${{steps.versions.outputs.rver}}/${digest#sha256:}"
+
+          mkdir -p /tmp/digests/${{matrix.type}}/${{matrix.ubuntu}}-bioc-${{matrix.biocversion}}
+          touch "/tmp/digests/${{matrix.type}}/${{matrix.ubuntu}}-bioc-${{matrix.biocversion}}/${digest#sha256:}"
+          mkdir -p /tmp/digests/${{matrix.type}}/${{matrix.ubuntu}}-bioc-${{matrix.biocversion}}-r-${{steps.versions.outputs.rver}}
+          touch "/tmp/digests/${{matrix.type}}/${{matrix.ubuntu}}-bioc-${{matrix.biocversion}}-r-${{steps.versions.outputs.rver}}/${digest#sha256:}"
+          mkdir -p /tmp/digests/${{matrix.type}}/${{steps.versions.outputs.osver}}-bioc-${{matrix.biocversion}}
+          touch "/tmp/digests/${{matrix.type}}/${{steps.versions.outputs.osver}}-bioc-${{matrix.biocversion}}/${digest#sha256:}"
+          mkdir -p /tmp/digests/${{matrix.type}}/${{steps.versions.outputs.osver}}-bioc-${{matrix.biocversion}}-r-${{steps.versions.outputs.rver}}
+          touch "/tmp/digests/${{matrix.type}}/${{steps.versions.outputs.osver}}-bioc-${{matrix.biocversion}}-r-${{steps.versions.outputs.rver}}/${digest#sha256:}"
+
 
       - name: Upload digests
         uses: actions/upload-artifact@v3
