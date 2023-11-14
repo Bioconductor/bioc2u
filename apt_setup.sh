@@ -1,4 +1,5 @@
 #!/bin/bash
+BIOC_VERSION=${1:-"3.18"}
 export UBUNTU_CODENAME=$(grep '^VERSION_CODENAME=' /etc/os-release | cut -d= -f2)
 apt update -qq
 apt install -y --no-install-recommends curl ca-certificates
@@ -12,3 +13,5 @@ echo "Pin: origin mghp.osn.xsede.org" >> /etc/apt/preferences.d/prefbioc2u
 echo "Pin-Priority: 800"  >> /etc/apt/preferences.d/prefbioc2u
 apt update -qq
 DEBIAN_FRONTEND=noninteractive apt install -y r-base-core r-cran-biocmanager r-cran-bspm
+Rscript -e "BiocManager::install(version='$BIOC_VERSION', update=TRUE, ask=FALSE)"
+Rscript -e "BiocManager::install(c('devtools'))"
