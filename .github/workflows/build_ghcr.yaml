@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         type: [builder, user]
-        ubuntu: [focal, jammy]
+        ubuntu: ['jammy'] #[focal, jammy]
         platform: [linux/amd64]
         biocversion: ['3.18']
 
