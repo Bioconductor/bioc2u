@@ -17,7 +17,7 @@ jobs:
         type: [builder, user]
         ubuntu: ['jammy'] #[focal, jammy]
         platform: [linux/amd64]
-        biocversion: ['3.18']
+        biocversion: ['3.19']
 
     name: Build container images for GHCR
     runs-on: ubuntu-latest
