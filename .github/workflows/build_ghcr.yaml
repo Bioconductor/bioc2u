@@ -136,7 +136,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ubuntu: [focal, jammy]
+        ubuntu: [noble, jammy]
         type: [builder, user]
     steps:
       - name: Download digests
