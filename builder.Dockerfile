@@ -8,4 +8,4 @@ RUN apt update -qq &&\
     sed -i 's/install.packages("BiocManager"/bspm::disable(); install.packages("BiocManager"/g' install_bioc_sysdeps.sh &&\
     sed -i 's/BiocManager::install(version=/bspm::disable(); BiocManager::install(version=/g' install_bioc_sysdeps.sh &&\
     bash install_bioc_sysdeps.sh $BIOC_VERSION || ( sed -i 's/--break-system-packages//g' install_bioc_sysdeps.sh && bash install_bioc_sysdeps.sh $BIOC_VERSION ) &&\
-    apt install -y debhelper dh-r
+    apt update -qq && apt install -y debhelper dh-r
