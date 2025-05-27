@@ -121,7 +121,7 @@ jobs:
 
 
       - name: Upload digests
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: r2udigests-${{ github.run_id }}
           path: /tmp/digests/**
@@ -140,7 +140,7 @@ jobs:
         type: [builder, user]
     steps:
       - name: Download digests
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: r2udigests-${{ github.run_id }}
           path: /tmp/digests
