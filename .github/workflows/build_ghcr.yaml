@@ -123,7 +123,7 @@ jobs:
       - name: Upload digests
         uses: actions/upload-artifact@v4
         with:
-          name: r2udigests-${{ github.run_id }}
+          name: r2udigests-${{matrix.ubuntu}}-${{matrix.type}}-${{ github.run_id }}
           path: /tmp/digests/**
           if-no-files-found: error
           retention-days: 1
@@ -142,7 +142,7 @@ jobs:
       - name: Download digests
         uses: actions/download-artifact@v4
         with:
-          name: r2udigests-${{ github.run_id }}
+          name: r2udigests-${{matrix.ubuntu}}-${{matrix.type}}-${{ github.run_id }}
           path: /tmp/digests
 
       - name: Set up Docker Buildx
