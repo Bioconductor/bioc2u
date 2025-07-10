@@ -19,13 +19,13 @@ Container images are available with multiple tagging formats:
 - **Ubuntu version**: `jammy`, `noble`
 - **Ubuntu version with R**: `jammy-r-4.4.2`, `noble-r-4.4.2`
 - **Ubuntu version with Bioconductor**: `jammy-bioc-3.21`, `noble-bioc-3.21`
-- **Full version**: `jammy-bioc-3.21-r-4.4.2`, `noble-bioc-3.21-r-4.4.2`
+- **Full version**: `jammy-bioc-3.21-r-4.5.1`, `noble-bioc-3.21-r-4.5.0`
 - **OS version**: `22.04`, `24.04` (corresponding to Ubuntu versions)
-- **OS version with R/Bioc**: `22.04-r-4.4.2`, `24.04-bioc-3.21-r-4.4.2`
+- **OS version with R/Bioc**: eg `22.04-r-4.5.1`, `24.04-bioc-3.21`, `24.04-bioc-3.21-r-4.5.1`
 
 #### Version Strategy and Backward Compatibility
 
-This design allows for old versions to remain accessible by default, under the full tags. For example: when R 4.5.1 comes out, the containers tagged simply `jammy-bioc-3.21` become `jammy-bioc-3.21-r-4.5.1` but the previous container remains accessible under `jammy-bioc-3.21-r-4.4.2`. When containers get rebuilt within the same version, old containers can still be used via their hash in the `ghcr.io/bioconductor/bioc2u-user@sha256:[hash]` format.
+This design allows for old versions to remain accessible by default, under the full tags. For example: when R 4.5.1 comes out, the containers tagged simply `jammy-bioc-3.21` become `jammy-bioc-3.21-r-4.5.1` but the previous container remains accessible under `jammy-bioc-3.21-r-4.5.0`. When containers get rebuilt within the same version, old containers can still be used via their hash in the `ghcr.io/bioconductor/bioc2u-user@sha256:[hash]` format.
 
 This ensures reproducibility by allowing users to pin to specific versions or use the latest versions through the shorter tag names.
 
@@ -42,7 +42,7 @@ docker run --rm -it ghcr.io/bioconductor/bioc2u-user:jammy
 docker run --rm -it ghcr.io/bioconductor/bioc2u-user:noble
 
 # Specific Bioconductor/R versions for reproducibility
-docker run --rm -it ghcr.io/bioconductor/bioc2u-user:jammy-bioc-3.21-r-4.4.2
+docker run --rm -it ghcr.io/bioconductor/bioc2u-user:jammy-bioc-3.21-r-4.5.0
 ```
 
 For package development with build tools:
