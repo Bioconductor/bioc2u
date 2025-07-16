@@ -1,6 +1,6 @@
 ## Bioc2u (beta): Ubuntu Binaries for Bioconductor packages
 
-This project aims to extend [r2u](https://github.com/eddelbuettel/r2u),
+This project aims to extend [r2u][r2u],
 in hopes of providing a repository of Ubuntu binaries via `apt` for all Bioconductor packages.
 
 **Bioc2u is currently available for Ubuntu Jammy (22.04) and Noble (24.04) and is still in beta development.**
@@ -10,7 +10,7 @@ in hopes of providing a repository of Ubuntu binaries via `apt` for all Biocondu
 We provide two types of container images for different use cases:
 
 - **User containers** (`bioc2u-user`): Minimal environment built on `ubuntu:jammy` or `ubuntu:noble` with R, BiocManager, and bioc2u/r2u repositories pre-configured
-- **Builder containers** (`bioc2u-builder`): Extended environment based on r2u containers with additional build tools for package development
+- **Builder containers** (`bioc2u-builder`): Extended environment based on [r2u][r2u] containers with additional build tools for package development
 
 #### Available Tags
 
@@ -54,7 +54,7 @@ docker run --rm -it ghcr.io/bioconductor/bioc2u-builder:jammy
 #### Local installation
 
 In an Ubuntu environment (eg in containers based on `ubuntu:jammy` and `ubuntu:noble`), you may use the [`apt_setup.sh`](https://github.com/Bioconductor/bioc2u/blob/devel/apt_setup.sh)
-script which will set up the Bioc2u `apt` repository and install R, and basic packages such as BiocManager.
+script which will set up the Bioc2u `apt` repository and install R, and basic packages such as BiocManager. This script leverages the [r2u][r2u] setup scripts from the [r2u repository](https://github.com/eddelbuettel/r2u/blob/master/inst/scripts/) to configure the CRAN apt repository.
 
 ```bash
 # Install curl if missing
@@ -65,11 +65,7 @@ curl https://raw.githubusercontent.com/Bioconductor/bioc2u/devel/apt_setup.sh | 
 ```
 
 After the initial setup, you may use `apt` or `install.packages()` freely. Installing packages through `apt` can be done in any shell session, by using the
-`r-bioc-` prefix and the all-lowercase name of the package, eg `apt install -y r-bioc-genomicranges`. You may alternatively continue to use R traditionally.
-
-By default, the `r-core-base` installation (provided by the r2u project), uses the [`bspm`](https://cran.r-project.org/web/packages/bspm/index.html) package to enable the usage of the package manager
-when installing packages from within R via `install.packages()` or `BiocManager::install()`. You may thus continue to use R as you would outside of this
-environment, and observe the speedup resulting from R using the `apt` package manager under the hood.
+`r-bioc-` prefix and the all-lowercase name of the package, eg `apt install -y r-bioc-genomicranges`. You may alternatively continue to use R traditionally, as you would in any other environment, and observe the speedup resulting from R using the `apt` package manager under the hood.
 
 ### Automated Builds
 
@@ -79,3 +75,9 @@ Container images are automatically built every 2 days and pushed to GitHub Conta
 - Supports linux/amd64 platform
 - Automatically extracts R and OS version information for comprehensive tagging
 - Creates multi-platform manifests with various tag combinations
+
+### Acknowledgments
+
+This project builds upon and extends the [r2u][r2u] project. Our `apt_setup.sh` script directly uses the [r2u setup scripts](https://github.com/eddelbuettel/r2u/blob/master/inst/scripts/) to configure the CRAN apt repository, and our builder containers are based on the [r2u][r2u] containers.
+
+[r2u]: https://eddelbuettel.github.io/r2u
