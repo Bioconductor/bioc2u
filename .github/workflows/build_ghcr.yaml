@@ -15,18 +15,27 @@ jobs:
       fail-fast: false
       matrix:
         type: [builder, user]
-        ubuntu: ['jammy', 'noble'] #[focal, jammy]
-        platform: [linux/amd64]
-        biocversion: ['3.21']
+        biocversion: ['3.22']
+        include:
+          - ubuntu: jammy
+            platform: linux/amd64
+            runner: ubuntu-latest
+          - ubuntu: noble
+            platform: linux/amd64
+            runner: ubuntu-latest
+          - ubuntu: noble
+            platform: linux/arm64
+            runner: ubuntu-latest-arm64
 
-    name: Build container images for GHCR
-    runs-on: ubuntu-latest
+    name: Build ${{ matrix.ubuntu }} (${{ matrix.platform }}) ${{ matrix.type }} for GHCR
+    runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Extract metadata for container image
         id: meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}-${{ matrix.type }}
           tags: |
@@ -37,19 +46,11 @@ jobs:
         run: |
           echo container=$(echo '${{ steps.meta.outputs.tags }}' | awk -F':' '{print $1}') >> $GITHUB_OUTPUT
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-        with:
-          platforms: arm64
-        if: contains(steps.versions.outputs.platform, 'arm64')
-
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        with:
-          platforms: ${{matrix.platform}}
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to GHCR
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -57,7 +58,7 @@ jobs:
 
       - name: Build and push container image to ghcr
         id: build
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v6
         with:
           build-args: |
             UBUNTU_TAG=${{matrix.ubuntu}}
@@ -79,7 +80,7 @@ jobs:
           EOF
 
       - name: Build and push container image to ghcr
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v6
         with:
           file: ${{matrix.ubuntu}}-${{matrix.platform}}-r.Dockerfile
           context: .
@@ -97,6 +98,10 @@ jobs:
           tar -xvf r.tar
           echo rver=$(cat rver | awk 'NR==1{print $3}') >> $GITHUB_OUTPUT
           echo osver=$(awk -F= '/VERSION_ID/ {gsub("\"", "", $2); print $2}' os-release) >> $GITHUB_OUTPUT
+
+      - name: Set platform name for artifact
+        id: platform
+        run: echo "name=$(echo '${{matrix.platform}}' | sed 's/\//-/g')" >> $GITHUB_OUTPUT
 
       - name: Export digest by ubuntu, r, and bioc versions
         run: |
@@ -123,7 +128,7 @@ jobs:
       - name: Upload digests
         uses: actions/upload-artifact@v4
         with:
-          name: r2udigests-${{matrix.ubuntu}}-${{matrix.type}}-${{ github.run_id }}
+          name: bioc2udigests-${{matrix.ubuntu}}-${{matrix.type}}-${{steps.platform.outputs.name}}-${{ github.run_id }}
           path: /tmp/digests/**
           if-no-files-found: error
           retention-days: 1
@@ -139,19 +144,25 @@ jobs:
         ubuntu: [noble, jammy]
         type: [builder, user]
     steps:
-      - name: Download digests
+      - name: Download amd64 digests
         uses: actions/download-artifact@v4
         with:
-          name: r2udigests-${{matrix.ubuntu}}-${{matrix.type}}-${{ github.run_id }}
+          name: bioc2udigests-${{matrix.ubuntu}}-${{matrix.type}}-linux-amd64-${{ github.run_id }}
           path: /tmp/digests
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+      - name: Download arm64 digests
+        uses: actions/download-artifact@v4
         with:
-          platforms: ${{matrix.platform}}
+          name: bioc2udigests-${{matrix.ubuntu}}-${{matrix.type}}-linux-arm64-${{ github.run_id }}
+          path: /tmp/digests
+        continue-on-error: true
+        if: matrix.ubuntu == 'noble'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to GHCR
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -159,7 +170,7 @@ jobs:
 
       - name: Extract metadata for container image
         id: meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}-${{ matrix.type }}
           tags: |
