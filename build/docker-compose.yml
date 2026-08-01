@@ -18,6 +18,8 @@ x-build-env: &build-env
   BIOC2U_REFRESH_DEPS: "${BIOC2U_REFRESH_DEPS:-0}"
   BIOC2U_LOG_TAIL: "${BIOC2U_LOG_TAIL:-50}"
   BIOC2U_TRACE: "${BIOC2U_TRACE:-0}"
+  # Guard against resuming a debs directory that belongs to another release.
+  BIOC2U_ALLOW_RELEASE_CHANGE: "${BIOC2U_ALLOW_RELEASE_CHANGE:-0}"
 
 x-upload-env: &upload-env
   DEB_S3_ENDPOINT: "${DEB_S3_ENDPOINT:-https://mghp.osn.xsede.org}"

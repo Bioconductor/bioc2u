@@ -30,6 +30,26 @@ if [ -n "$IMAGE_BIOC" ] && [ "$IMAGE_BIOC" != "$BIOC_VERSION" ]; then
      this release - or unset BIOC_VERSION to build $IMAGE_BIOC."
 fi
 
+# --------------------------------------------------- release-change guard
+# A run resumes by skipping done-<pkg>/; pointed at another release's debs,
+# that silently carries every already-built package forward with the old
+# ABI stamp. Record and check the release a debs directory belongs to.
+STAMP="$DEBS_DIR/.bioc-version"
+if [ -s "$STAMP" ]; then
+    PREV_RELEASE="$(cat "$STAMP")"
+    if [ "$PREV_RELEASE" != "$BIOC_VERSION" ] && [ "${BIOC2U_ALLOW_RELEASE_CHANGE:-0}" != "1" ]; then
+        die "$DEBS_DIR holds a Bioconductor $PREV_RELEASE build, but this is $BIOC_VERSION.
+     Resuming would carry $PREV_RELEASE packages into the $BIOC_VERSION
+     repository with the wrong ABI stamp. Use a fresh directory
+     (BIOC2U_DEBS_ROOT), or if you really mean to continue in place:
+       rm -rf $DEBS_DIR/done-* $DEBS_DIR/fail-* $DEBS_DIR/packages.json
+       BIOC2U_REFRESH_DEPS=1 BIOC2U_ALLOW_RELEASE_CHANGE=1 ..."
+    fi
+    [ "$PREV_RELEASE" != "$BIOC_VERSION" ] &&
+        log "WARNING: continuing a $PREV_RELEASE directory as $BIOC_VERSION (BIOC2U_ALLOW_RELEASE_CHANGE=1)"
+fi
+printf '%s\n' "$BIOC_VERSION" > "$STAMP"
+
 # ---------------------------------------------------------------- dependencies
 # biocdeps.json is the full graph; packages.json is the working copy that
 # shrinks as packages build. Both persist so an interrupted run resumes;
