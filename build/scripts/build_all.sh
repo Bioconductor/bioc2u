@@ -17,6 +17,18 @@ export BIOC_VERSION
 cd "$DEBS_DIR" || die "$DEBS_DIR is not available"
 
 log "Bioconductor $BIOC_VERSION ($(release_branch "$BIOC_VERSION")) on $(ubuntu_codename), building in $DEBS_DIR"
+log "R $(Rscript -e 'cat(paste(R.version$major, R.version$minor, sep="."))' 2>/dev/null), BiocManager pinned to $(Rscript -e 'cat(as.character(BiocManager::version()))' 2>/dev/null)"
+
+# ------------------------------------------------------- environment sanity
+# Sources from one release in an image pinned to another produce packages
+# stamped for the wrong release. Refuse the mismatch.
+IMAGE_BIOC="$(Rscript -e 'cat(as.character(BiocManager::version()))' 2>/dev/null)"
+if [ -n "$IMAGE_BIOC" ] && [ "$IMAGE_BIOC" != "$BIOC_VERSION" ]; then
+    die "BIOC_VERSION=$BIOC_VERSION but this image's BiocManager is $IMAGE_BIOC.
+     Use a builder image built for $BIOC_VERSION - the container workflow
+     publishes bioc2u-builder:<codename>-r-<R version> once it has run for
+     this release - or unset BIOC_VERSION to build $IMAGE_BIOC."
+fi
 
 # ---------------------------------------------------------------- dependencies
 # biocdeps.json is the full graph; packages.json is the working copy that
