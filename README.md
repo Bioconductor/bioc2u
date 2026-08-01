@@ -31,6 +31,17 @@ This ensures reproducibility by allowing users to pin to specific versions or us
 
 The two image types pick up a new R differently. The user containers install R from the CRAN `apt` repository at build time, so they follow it automatically. The builder containers are built on a pinned [r2u][r2u] base image (`R_VERSION` in `builder.Dockerfile`, passed from the workflow matrix), so they only move to a new R when that is bumped.
 
+### Documentation
+
+This page covers **using** bioc2u. For maintaining, deploying or adapting it, start at the [documentation index](docs/README.md):
+
+| | |
+|---|---|
+| [build/README.md](build/README.md) | **The build stack** — producing the `.deb` packages and publishing them |
+| [docs/architecture.md](docs/architecture.md) | How the pieces fit together, and how `build/` relates to the container images |
+| [docs/troubleshooting.md](docs/troubleshooting.md) | Symptom → cause → fix, for users and maintainers |
+| [docs/security.md](docs/security.md) | The signing key, the apt pin, and what installing from this repository means |
+
 ### Getting started
 
 #### Using Docker containers
@@ -68,6 +79,20 @@ curl https://raw.githubusercontent.com/Bioconductor/bioc2u/devel/apt_setup.sh | 
 
 After the initial setup, you may use `apt` or `install.packages()` freely. Installing packages through `apt` can be done in any shell session, by using the
 `r-bioc-` prefix and the all-lowercase name of the package, eg `apt install -y r-bioc-genomicranges`. You may alternatively continue to use R traditionally, as you would in any other environment, and observe the speedup resulting from R using the `apt` package manager under the hood.
+
+### Building the packages
+
+The `.deb` packages served by the repository are produced by the build stack in
+[`build/`](build), which runs the whole Bioconductor package graph through the
+`bioc2u-builder` containers with Docker Compose:
+
+```bash
+cd build
+docker compose up        # builds jammy and noble
+```
+
+See [`build/README.md`](build/README.md) for configuration, resuming an
+interrupted run, and publishing the result with `deb-s3`.
 
 ### Automated Builds
 
