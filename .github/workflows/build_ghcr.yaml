@@ -19,32 +19,38 @@ jobs:
             platform: linux/amd64
             runner: ubuntu-latest
             type: builder
-            biocversion: '3.22'
+            biocversion: '3.23'
+            rversion: '4.6.1'
           - ubuntu: jammy
             platform: linux/amd64
             runner: ubuntu-latest
             type: user
-            biocversion: '3.22'
+            biocversion: '3.23'
+            rversion: '4.6.1'
           - ubuntu: noble
             platform: linux/amd64
             runner: ubuntu-latest
             type: builder
-            biocversion: '3.22'
+            biocversion: '3.23'
+            rversion: '4.6.1'
           - ubuntu: noble
             platform: linux/amd64
             runner: ubuntu-latest
             type: user
-            biocversion: '3.22'
+            biocversion: '3.23'
+            rversion: '4.6.1'
           - ubuntu: noble
             platform: linux/arm64
             runner: ubuntu-latest-arm64
             type: builder
-            biocversion: '3.22'
+            biocversion: '3.23'
+            rversion: '4.6.1'
           - ubuntu: noble
             platform: linux/arm64
             runner: ubuntu-latest-arm64
             type: user
-            biocversion: '3.22'
+            biocversion: '3.23'
+            rversion: '4.6.1'
 
     name: Build ${{ matrix.ubuntu }} (${{ matrix.platform }}) ${{ matrix.type }} for GHCR
     runs-on: ${{ matrix.runner }}
@@ -82,6 +88,7 @@ jobs:
           build-args: |
             UBUNTU_TAG=${{matrix.ubuntu}}
             BIOC_VERSION=${{matrix.biocversion}}
+            R_VERSION=${{matrix.rversion}}
           file: ${{ matrix.type }}.Dockerfile
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=${{ steps.vars.outputs.container }},push-by-digest=true,name-canonical=true,push=true

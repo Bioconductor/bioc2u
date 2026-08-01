@@ -1,5 +1,5 @@
 #!/bin/bash
-BIOC_VERSION=${1:-"3.19"}
+BIOC_VERSION=${1:-"3.23"}
 export UBUNTU_CODENAME=$(grep '^VERSION_CODENAME=' /etc/os-release | cut -d= -f2)
 apt update -qq
 apt install -y --no-install-recommends curl ca-certificates

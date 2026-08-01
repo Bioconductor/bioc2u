@@ -1,7 +1,11 @@
 ARG BASE_IMAGE=ghcr.io/bioconductor/r2u
 ARG UBUNTU_TAG=jammy
-FROM ${BASE_IMAGE}:${UBUNTU_TAG} AS base
-ARG BIOC_VERSION=3.19
+# R comes from the r2u base image, which publishes <codename>-r-<version> tags.
+# Pinned rather than floating, so a build is reproducible and an upstream R
+# release does not change the image until this is bumped.
+ARG R_VERSION=4.6.1
+FROM ${BASE_IMAGE}:${UBUNTU_TAG}-r-${R_VERSION} AS base
+ARG BIOC_VERSION=3.23
 RUN apt update -qq &&\
     apt install -y git-all build-essential binutils lintian dh-make devscripts curl vim &&\
     curl -O https://raw.githubusercontent.com/Bioconductor/bioconductor_docker/devel/bioc_scripts/install_bioc_sysdeps.sh &&\
