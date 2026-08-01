@@ -87,6 +87,9 @@ print("\n".join(pkg for pkg, deps in graph.items() if not deps))' packages.json
 # BiocVersion seeds the graph: it provides r-api-bioc-<version>, which most
 # other r-bioc-* packages depend on, so build it first.
 bash "$BIOC2U_SCRIPTS/make_deb.sh" BiocVersion "$BIOC_VERSION" < /dev/null
+[ -d done-BiocVersion ] ||
+    die "BiocVersion did not build, and every other package is built against it.
+     See $DEBS_DIR/BiocVersion-log or $DEBS_DIR/fail-BiocVersion/."
 
 # One round per generation of the graph; when a whole round changes nothing,
 # what is left is unbuildable.

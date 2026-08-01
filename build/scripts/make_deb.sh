@@ -92,7 +92,8 @@ if cd "$PKG"; then
     install_cmd="apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y"
     mk-build-deps --install --tool "${install_cmd}" debian/control >> "$LOG" 2>&1
 
-    # BiocVersion is the virtual package everything else depends on.
+    # The Provides is also set on the built .deb below; dh-r rewrites Depends
+    # after this point, so the control file is not the last word.
     [ "$PKG" = "BiocVersion" ] && sed -i "/Suggests:/ a\\Provides: r-api-bioc-$BIOC_VERSION" debian/control
     sed -i "s|Maintainer: Debian R Packages Maintainers <r-pkg-team@alioth-lists.debian.net>|Maintainer: $DEBFULLNAME <$DEBEMAIL>|" debian/control
 
@@ -107,6 +108,14 @@ if [ -s "$PKG-debname" ]; then
     DEBNAME=$(head -n 1 "$PKG-debname")
     log "DONE $PKG -> $DEBNAME"
     chmod 644 "./$DEBNAME"
+
+    # The seed cannot depend on the ABI it defines; strip the one dh-r
+    # inherited from the builder's own BiocVersion. See lib.sh.
+    if [ "$PKG" = "BiocVersion" ]; then
+        fix_biocversion_deb "./$DEBNAME" "$BIOC_VERSION" "${BIOC2U_ALSO_PROVIDE_ABI:-}" ||
+            die "could not rewrite $DEBNAME"
+        assert_biocversion_deb "./$DEBNAME" "$BIOC_VERSION"
+    fi
     # Install it right away: the packages built after this one need it present.
     apt-get install -y "./$DEBNAME" >> "$LOG" 2>&1
     cp -r "$PKG/debian" "$PKG-debian"

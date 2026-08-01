@@ -30,6 +30,53 @@ bioc_version() {
 # 3.22 -> RELEASE_3_22
 release_branch() { echo "RELEASE_${1//./_}"; }
 
+# --------------------------------------------------------------- BiocVersion
+# BiocVersion is the seed of the whole repository: most other r-bioc-* packages
+# depend on the r-api-bioc-<release> virtual package that BiocVersion provides.
+#
+# Rewrite the control of a built BiocVersion .deb in place: dh-r injects a
+# dependency on the previous release's ABI via ${R:Depends} at
+# dpkg-buildpackage time, so it can only be fixed on the .deb. $2 is the
+# release it defines; $3, if set, an older ABI to also provide.
+fix_biocversion_deb() {
+    local deb="$1" release="$2" also="${3:-}"
+    local tmp ctl provides
+    tmp=$(mktemp -d) || return 1
+    dpkg-deb -R "$deb" "$tmp" || { rm -rf "$tmp"; return 1; }
+    ctl="$tmp/DEBIAN/control"
+
+    provides="r-api-bioc-$release"
+    [ -n "$also" ] && [ "$also" != "$provides" ] && provides="$provides, $also"
+
+    # Out of Depends entirely; Provides replaced wholesale so re-running cannot
+    # accumulate duplicates.
+    sed -i -E "s/, *r-api-bioc-[0-9.]+//g; s/r-api-bioc-[0-9.]+, *//g" "$ctl"
+    if grep -q "^Provides:" "$ctl"; then
+        sed -i -E "s/^Provides:.*/Provides: $provides/" "$ctl"
+    else
+        sed -i "/^Depends:/a Provides: $provides" "$ctl"
+    fi
+
+    dpkg-deb -b "$tmp" "$deb" >/dev/null || { rm -rf "$tmp"; return 1; }
+    rm -rf "$tmp"
+}
+
+# Refuse to ship a BiocVersion that would make most r-bioc-* packages
+# uninstallable.
+assert_biocversion_deb() {
+    local deb="$1" release="$2" dep prov
+    dep=$(dpkg-deb -f "$deb" Depends 2>/dev/null)
+    prov=$(dpkg-deb -f "$deb" Provides 2>/dev/null)
+    case "$dep" in
+        *r-api-bioc-*) die "BiocVersion still depends on a Bioconductor ABI: $dep" ;;
+    esac
+    case "$prov" in
+        *"r-api-bioc-$release"*) : ;;
+        *) die "BiocVersion does not provide r-api-bioc-$release (Provides: ${prov:-none})" ;;
+    esac
+    log "BiocVersion OK - provides: $prov"
+}
+
 # deb-s3 is only needed for uploads, so it is installed on demand rather than
 # baked into every build container.
 ensure_deb_s3() {
