@@ -1,0 +1,3 @@
+# Build stack: local configuration and build output
+build/.env
+build/debs/

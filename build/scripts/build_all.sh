@@ -1,0 +1,82 @@
+#!/bin/bash
+# Build .debs for the whole Bioconductor package graph, in dependency order.
+# packages.json is the run's state: a package is dispatched once its
+# dependency list is empty, and the run ends when a full pass changes nothing.
+#
+# Not `set -e`: individual package failures are expected and recorded per
+# package by make_deb.sh (see fail-<pkg>/ directories).
+set -uo pipefail
+
+# shellcheck source=lib.sh
+source "${BIOC2U_SCRIPTS:-/opt/bioc2u/scripts}/lib.sh"
+
+BIOC_VERSION="$(bioc_version)"
+export BIOC_VERSION
+[ -n "$BIOC_VERSION" ] || die "could not determine the Bioconductor version"
+
+cd "$DEBS_DIR" || die "$DEBS_DIR is not available"
+
+log "Bioconductor $BIOC_VERSION ($(release_branch "$BIOC_VERSION")) on $(ubuntu_codename), building in $DEBS_DIR"
+
+# ---------------------------------------------------------------- dependencies
+# biocdeps.json is the full graph; packages.json is the working copy that
+# shrinks as packages build. Both persist so an interrupted run resumes;
+# BIOC2U_REFRESH_DEPS=1 pulls a fresh graph (eg after a release).
+if [ "${BIOC2U_REFRESH_DEPS:-0}" = "1" ] || [ ! -s biocdeps.json ]; then
+    log "resolving the Bioconductor dependency graph (this takes a few minutes)"
+    # Via a temporary file: a graph half-written by an interrupted run would
+    # otherwise look complete to the next one.
+    Rscript "$BIOC2U_SCRIPTS/deps_json.R" biocdeps=biocdeps.json.tmp ||
+        die "failed to resolve the dependency graph"
+    mv biocdeps.json.tmp biocdeps.json
+    rm -f packages.json
+else
+    log "reusing existing biocdeps.json (BIOC2U_REFRESH_DEPS=1 to regenerate)"
+fi
+[ -s packages.json ] || cp biocdeps.json packages.json
+
+# ------------------------------------------------------------ package indexes
+# Source tarball versions and locations come from these.
+for repo in bioc:bioc annotation:data/annotation experiment:data/experiment; do
+    name="${repo%%:*}"
+    path="${repo#*:}"
+    curl -fsSL -o "PACKAGES.$name" \
+        "https://bioconductor.org/packages/$BIOC_VERSION/$path/src/contrib/PACKAGES" ||
+        die "could not fetch the $name package index for Bioconductor $BIOC_VERSION"
+done
+
+# ----------------------------------------------------------------- build loop
+ready_packages() {
+    python3 -c 'import json, sys
+graph = json.load(open(sys.argv[1]))
+print("\n".join(pkg for pkg, deps in graph.items() if not deps))' packages.json
+}
+
+# BiocVersion seeds the graph: it provides r-api-bioc-<version>, which most
+# other r-bioc-* packages depend on, so build it first.
+bash "$BIOC2U_SCRIPTS/make_deb.sh" BiocVersion "$BIOC_VERSION" < /dev/null
+
+# One round per generation of the graph; when a whole round changes nothing,
+# what is left is unbuildable.
+round=0
+while :; do
+    round=$((round + 1))
+    cp packages.json old_packages.json
+    ready_packages > curlist
+    log "round $round: $(grep -c . curlist) package(s) ready to build"
+    while read -r pkg; do
+        # Close stdin so the build cannot swallow the rest of the list.
+        [ -n "$pkg" ] && bash "$BIOC2U_SCRIPTS/make_deb.sh" "$pkg" "$BIOC_VERSION" < /dev/null
+    done < curlist
+    diff -q packages.json old_packages.json >/dev/null 2>&1 && break
+done
+
+# -------------------------------------------------------------------- results
+for d in fail-*/; do
+    [ -d "$d" ] && basename "$d" | sed 's/^fail-//'
+done > failed-packages.txt 2>/dev/null
+sort -o failed-packages.txt failed-packages.txt 2>/dev/null
+
+log "build loop finished after $round round(s)"
+bash "$BIOC2U_SCRIPTS/progress.sh" "$DEBS_DIR"
+log "upload with: docker compose run --rm $(ubuntu_codename)-upload"

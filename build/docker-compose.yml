@@ -1,0 +1,112 @@
+# Build stack for the bioc2u apt repository.
+#
+#   cd build && cp .env.example .env      # edit to taste
+#   docker compose up                     # build jammy and noble side by side
+#   docker compose run --rm jammy         # ... or one distro on its own
+#   docker compose run --rm jammy-shell   # same environment, interactive
+#   docker compose run --rm jammy-upload  # publish, signed
+#
+# Image tags are rebuilt in place: `docker compose pull` before a fresh run.
+# Requires Docker Compose v2. See README.md in this directory.
+name: bioc2u
+
+x-build-env: &build-env
+  # Empty means "whatever BiocManager in the image is pinned to".
+  BIOC_VERSION: "${BIOC_VERSION:-}"
+  DEBEMAIL: "${DEBEMAIL:-maintainer@bioconductor.org}"
+  DEBFULLNAME: "${DEBFULLNAME:-Bioconductor Core Team}"
+  BIOC2U_REFRESH_DEPS: "${BIOC2U_REFRESH_DEPS:-0}"
+  BIOC2U_LOG_TAIL: "${BIOC2U_LOG_TAIL:-50}"
+  BIOC2U_TRACE: "${BIOC2U_TRACE:-0}"
+
+x-upload-env: &upload-env
+  DEB_S3_ENDPOINT: "${DEB_S3_ENDPOINT:-https://mghp.osn.xsede.org}"
+  DEB_S3_BUCKET: "${DEB_S3_BUCKET:-bir190004-bucket01}"
+  DEB_S3_PREFIX: "${DEB_S3_PREFIX-bioc2u}"
+  DEB_S3_COMPONENT: "${DEB_S3_COMPONENT:-release}"
+  DEB_S3_EXTRA_ARGS: "${DEB_S3_EXTRA_ARGS:-}"
+  GPG_SIGN_KEY: "${GPG_SIGN_KEY:-}"
+  BIOC2U_ALLOW_UNSIGNED: "${BIOC2U_ALLOW_UNSIGNED:-0}"
+  AWS_PROFILE: "${AWS_PROFILE:-}"
+  AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID:-}"
+  AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY:-}"
+  BIOC2U_DRY_RUN: "${BIOC2U_DRY_RUN:-0}"
+
+x-build: &build
+  restart: "no"
+  init: true
+  entrypoint: ["bash", "/opt/bioc2u/scripts/entrypoint.sh"]
+  command: ["bash", "/opt/bioc2u/scripts/build_all.sh"]
+  environment: *build-env
+
+x-shell: &shell
+  restart: "no"
+  init: true
+  entrypoint: ["bash", "/opt/bioc2u/scripts/entrypoint.sh"]
+  command: ["bash"]
+  environment: *build-env
+  stdin_open: true
+  tty: true
+  profiles: ["shell"]
+
+x-upload: &upload
+  restart: "no"
+  init: true
+  entrypoint: ["bash", "/opt/bioc2u/scripts/entrypoint.sh"]
+  command: ["bash", "/opt/bioc2u/scripts/upload.sh"]
+  environment: *upload-env
+  stdin_open: true
+  tty: true
+  profiles: ["upload"]
+
+services:
+  # -------------------------------------------------------------- full builds
+  jammy:
+    <<: *build
+    image: "${BUILDER_IMAGE_REPO:-ghcr.io/bioconductor/bioc2u-builder}:jammy-r-${R_VERSION:-4.6.1}"
+    volumes:
+      - ./scripts:/opt/bioc2u/scripts:ro
+      - ${BIOC2U_DEBS_ROOT:-./debs}/jammy:/root/debs
+
+  noble:
+    <<: *build
+    image: "${BUILDER_IMAGE_REPO:-ghcr.io/bioconductor/bioc2u-builder}:noble-r-${R_VERSION:-4.6.1}"
+    volumes:
+      - ./scripts:/opt/bioc2u/scripts:ro
+      - ${BIOC2U_DEBS_ROOT:-./debs}/noble:/root/debs
+
+  # ------------------------------------------- same environment, but a prompt
+  jammy-shell:
+    <<: *shell
+    image: "${BUILDER_IMAGE_REPO:-ghcr.io/bioconductor/bioc2u-builder}:jammy-r-${R_VERSION:-4.6.1}"
+    volumes:
+      - ./scripts:/opt/bioc2u/scripts:ro
+      - ${BIOC2U_DEBS_ROOT:-./debs}/jammy:/root/debs
+
+  noble-shell:
+    <<: *shell
+    image: "${BUILDER_IMAGE_REPO:-ghcr.io/bioconductor/bioc2u-builder}:noble-r-${R_VERSION:-4.6.1}"
+    volumes:
+      - ./scripts:/opt/bioc2u/scripts:ro
+      - ${BIOC2U_DEBS_ROOT:-./debs}/noble:/root/debs
+
+  # ----------------------------------------- publishing (signed, run by hand)
+  jammy-upload:
+    <<: *upload
+    image: "${BUILDER_IMAGE_REPO:-ghcr.io/bioconductor/bioc2u-builder}:jammy-r-${R_VERSION:-4.6.1}"
+    volumes:
+      - ./scripts:/opt/bioc2u/scripts:ro
+      - ${BIOC2U_DEBS_ROOT:-./debs}/jammy:/root/debs
+      - ${AWS_DIR:-~/.aws}:/root/.aws:ro
+      # Writable: gpg needs to create its agent socket and lock files.
+      - ${GNUPG_DIR:-~/.gnupg}:/root/.gnupg
+
+  noble-upload:
+    <<: *upload
+    image: "${BUILDER_IMAGE_REPO:-ghcr.io/bioconductor/bioc2u-builder}:noble-r-${R_VERSION:-4.6.1}"
+    volumes:
+      - ./scripts:/opt/bioc2u/scripts:ro
+      - ${BIOC2U_DEBS_ROOT:-./debs}/noble:/root/debs
+      - ${AWS_DIR:-~/.aws}:/root/.aws:ro
+      # Writable: gpg needs to create its agent socket and lock files.
+      - ${GNUPG_DIR:-~/.gnupg}:/root/.gnupg
