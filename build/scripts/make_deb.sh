@@ -86,6 +86,11 @@ fi
 
 if cd "$PKG"; then
     sed -i "s/git_branch: devel/git_branch: $RELEASE_BRANCH/" DESCRIPTION
+
+    # Must run before dh-make-R reads DESCRIPTION; see lib.sh for what this
+    # fixes and why it happens there.
+    normalise_r_version_constraints DESCRIPTION >> "$LOG" 2>&1
+
     dh-make-R --repo bioc >> "$LOG" 2>&1
     dh-update-R >> "$LOG" 2>&1
 
