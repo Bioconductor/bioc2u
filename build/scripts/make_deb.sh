@@ -95,7 +95,18 @@ if cd "$PKG"; then
     dh-update-R >> "$LOG" 2>&1
 
     install_cmd="apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y"
-    mk-build-deps --install --tool "${install_cmd}" debian/control >> "$LOG" 2>&1
+    if ! mk-build-deps --install --tool "${install_cmd}" debian/control >> "$LOG" 2>&1; then
+        # Not fatal: the builder image often already holds what is needed. But
+        # a later in-R failure names the wrong packages, so record the
+        # unresolved Build-Depends while the real cause is known.
+        {
+            echo "BUILD-DEPS UNRESOLVED for $PKG: apt could not satisfy Build-Depends."
+            echo "Any 'dependencies ... are not available' error below may name"
+            echo "unrelated packages; the cause is in the field printed here."
+            awk '/^Build-Depends:/ {p=1; print; next} p && /^[[:space:]]/ {print; next} p {exit}' \
+                debian/control
+        } >> "$LOG"
+    fi
 
     # The Provides is also set on the built .deb below; dh-r rewrites Depends
     # after this point, so the control file is not the last word.
