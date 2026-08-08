@@ -17,6 +17,7 @@ maintain it.
 | [operations.md](operations.md) | Publishing a build, the BiocVersion seed, the tagging scheme |
 | [troubleshooting.md](troubleshooting.md) | Symptom → cause → fix, for users and for maintainers |
 | [security.md](security.md) | The signing key, the apt pin, and what installing from this repository means |
+| [examples/](examples/) | Worked setups: CI, a Dockerfile, a bare Ubuntu machine, pinning |
 
 ## Repository layout
 

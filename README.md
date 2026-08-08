@@ -43,6 +43,7 @@ This page covers **using** bioc2u. For maintaining, deploying or adapting it, st
 | [docs/operations.md](docs/operations.md) | Publishing a build, the BiocVersion seed, the tagging scheme |
 | [docs/troubleshooting.md](docs/troubleshooting.md) | Symptom → cause → fix, for users and maintainers |
 | [docs/security.md](docs/security.md) | The signing key, the apt pin, and what installing from this repository means |
+| [docs/examples/](docs/examples/) | Worked setups: Dockerfile, CI, bare machine, pinning |
 
 ### Getting started
 
