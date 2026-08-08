@@ -83,6 +83,34 @@ curl https://raw.githubusercontent.com/Bioconductor/bioc2u/devel/apt_setup.sh | 
 After the initial setup, you may use `apt` or `install.packages()` freely. Installing packages through `apt` can be done in any shell session, by using the
 `r-bioc-` prefix and the all-lowercase name of the package, eg `apt install -y r-bioc-genomicranges`. You may alternatively continue to use R traditionally, as you would in any other environment, and observe the speedup resulting from R using the `apt` package manager under the hood.
 
+#### Uninstalling
+
+The [`uninstall.sh`](https://github.com/Bioconductor/bioc2u/blob/devel/uninstall.sh) script reverses `apt_setup.sh`:
+
+```bash
+curl -O https://raw.githubusercontent.com/Bioconductor/bioc2u/devel/uninstall.sh
+sudo bash uninstall.sh            # remove the bioc2u repository configuration
+sudo bash uninstall.sh --purge    # also remove installed r-bioc-* packages
+sudo bash uninstall.sh --all      # also remove the r2u/CRAN apt layer and bspm setup
+```
+
+By default, installed packages are kept and keep working; they stop receiving updates from the removed repository. `--all` additionally reverses the r2u/CRAN layer set up by the r2u scripts (both the jammy and noble file layouts are handled) and removes the bspm lines from `Rprofile.site`. On jammy, r2u's script also adds two keys to `/etc/apt/trusted.gpg` with `apt-key`, which `--all` leaves in place; remove them with `sudo apt-key del 67C2D66C4B1D4339` and `sudo apt-key del 51716619E084DAB9`. R itself is never removed by the script — use `sudo apt remove r-base-core` for that. Containers need no uninstall: remove the container and image instead (`docker rmi ghcr.io/bioconductor/bioc2u-user:noble`).
+
+#### Upgrading to a new Bioconductor release
+
+Check first that the new release has been published to the repository (it is built after a release is cut, not on the same day): after `sudo apt update`, `apt-cache policy r-bioc-biocversion` shows a candidate that starts with the new version, eg `3.24`. Then:
+
+- **Containers:** pull the new release's tag, eg `docker pull ghcr.io/bioconductor/bioc2u-user:noble-bioc-<release>-r-<R>`. Previous full tags remain available, so existing pinned setups are unaffected.
+- **Native installs:** re-run the setup with the new version, then upgrade in place:
+
+```bash
+curl https://raw.githubusercontent.com/Bioconductor/bioc2u/devel/apt_setup.sh | sudo bash -s <release>   # re-points BiocManager and refreshes R
+sudo apt full-upgrade                  # moves installed packages to the new release's builds
+Rscript -e 'BiocManager::valid()'      # flags anything left behind
+```
+
+To compare before and after, record the package versions: `dpkg -l 'r-bioc-*' 'r-cran-*' > versions.txt`.
+
 ### Building the packages
 
 The `.deb` packages served by the repository are produced by the build stack in
