@@ -184,7 +184,8 @@ grep -c 'install.packages("BiocManager"' install_bioc_sysdeps.sh   # expect >= 1
 grep -c 'BiocManager::install(version=' install_bioc_sysdeps.sh    # expect >= 1
 ```
 
-Zero means upstream changed.
+Zero means upstream changed. See
+[updating.md](updating.md#upstream-scripts).
 
 ### Builder fails on `--break-system-packages`
 
@@ -248,7 +249,7 @@ the tag is derived from the built image rather than from the matrix, so the tag
 reports the R that is in the image.
 
 `bioc2u-builder` is different: its R comes from the pinned r2u base. The two can
-differ.
+differ. See [updating.md](updating.md#r-release).
 
 ### Everything builds but users report missing packages
 

@@ -41,6 +41,7 @@ This page covers **using** bioc2u. For maintaining, deploying or adapting it, st
 | [docs/architecture.md](docs/architecture.md) | How the pieces fit together, and how `build/` relates to the container images |
 | [docs/deployment.md](docs/deployment.md) | Using bioc2u, building the container images, running your own apt repository |
 | [docs/operations.md](docs/operations.md) | Publishing a build, the BiocVersion seed, the tagging scheme, health checks, backups |
+| [docs/updating.md](docs/updating.md) | Release, R, Ubuntu and base image updates: cadence, procedure, rollback |
 | [docs/troubleshooting.md](docs/troubleshooting.md) | Symptom → cause → fix, for users and maintainers |
 | [docs/security.md](docs/security.md) | The signing key, the apt pin, and what installing from this repository means |
 | [docs/examples/](docs/examples/) | Worked setups: Dockerfile, CI, bare machine, pinning |
