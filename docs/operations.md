@@ -112,6 +112,104 @@ virtual package stops meaning anything.
    ```
    Repeat both for jammy (`jammy-upload`, `ubuntu:jammy`).
 
+## Health checks
+
+| Check | Expect |
+|---|---|
+| `curl -fsS https://mghp.osn.xsede.org/bir190004-bucket01/bioc2u/dists/noble/Release \| grep '^Date:'` | The date of the last publish, for each of `jammy` and `noble` |
+| `verify_repo.sh` from a blank container (see [above](#publishing-a-release-build)) | `PASS` |
+| Packages per ABI stamp (below) | All but a few on the current release |
+| `gh run list --repo Bioconductor/bioc2u --workflow build_ghcr.yaml --limit 5` | A successful run within the last two days |
+| `gh run list --repo Bioconductor/bioc2u --workflow build_ghcr.yaml --event schedule --limit 1` | A scheduled run within the last two days |
+| `gh api repos/Bioconductor/bioc2u/actions/workflows/build_ghcr.yaml --jq .state` | `active` |
+| `gh api repos/Bioconductor/r2u/actions/workflows/build_ghcr.yaml --jq .state` | `active`: this workflow publishes the builder base image, including the tag for a new R |
+| `docker manifest inspect ghcr.io/bioconductor/bioc2u-user:noble-bioc-3.23-r-4.6.1` | A manifest list with `amd64` and `arm64` |
+
+Packages per ABI stamp, for one distro:
+
+```bash
+curl -fsS https://mghp.osn.xsede.org/bir190004-bucket01/bioc2u/dists/noble/release/binary-amd64/Packages.gz |
+  gzip -dc | grep '^Depends:' | grep -oE 'r-api-bioc-[0-9.]+' | sort | uniq -c
+```
+
+BiocVersion provides only the current release's ABI, so every package counted
+under an older one is uninstallable; see
+[Removing packages the current release does not build](#removing-packages-the-current-release-does-not-build).
+Packages without a stamp, mostly annotation packages, are not counted.
+
+GitHub turns off a public repository's scheduled workflows after 60 days
+without repository activity (state `disabled_inactivity`), and a workflow can
+read `active` while its schedule does not run. For both, see
+[troubleshooting.md](troubleshooting.md#the-images-have-not-been-rebuilt-for-days).
+
+## Removing packages the current release does not build
+
+`deb-s3 upload` adds and replaces packages but never removes one. A package
+the new release did not build (it failed, or it left Bioconductor) keeps its
+previous build in the index. If that build carries an older
+`r-api-bioc-<version>` stamp, which the current BiocVersion does not provide,
+apt reports it as not installable; if it carries none, as most annotation
+packages do, it still installs at its old version. Removing it makes apt report
+it as missing, and `BiocManager::install()` then builds it from source.
+
+List them for one distro. First the packages stamped for an older release:
+
+```bash
+curl -fsS https://mghp.osn.xsede.org/bir190004-bucket01/bioc2u/dists/noble/release/binary-amd64/Packages.gz |
+  gzip -dc |
+  awk -v cur='r-api-bioc-3.23' '/^Package:/ {p=$2} /^Depends:/ && /r-api-bioc-/ && index($0, cur) == 0 {print p}'
+```
+
+Then the packages the release does not have at all, stamped or not:
+
+```bash
+rel=3.23
+for p in bioc data/annotation data/experiment; do
+  curl -fsS "https://bioconductor.org/packages/$rel/$p/src/contrib/PACKAGES"
+done | awk '/^Package:/ {print "r-bioc-" tolower($2)}' | sort -u > release.txt
+curl -fsS https://mghp.osn.xsede.org/bir190004-bucket01/bioc2u/dists/noble/release/binary-amd64/Packages.gz |
+  gzip -dc | awk '/^Package: r-bioc-/ {print $2}' | sort -u | comm -23 - release.txt
+```
+
+Remove them with `deb-s3 delete <package> --arch=all`, passing the same
+endpoint, bucket, prefix, codename, component and `--sign` flags as the upload
+(`BIOC2U_DRY_RUN=1 docker compose run --rm noble-upload` prints them). In the
+upload service:
+
+```bash
+docker compose run --rm noble-upload bash -c \
+  'export GPG_TTY=$(tty); source /opt/bioc2u/scripts/lib.sh && ensure_deb_s3 &&
+   deb-s3 delete <package> --arch=all <flags>'
+```
+
+`deb-s3 clean` with the same flags then deletes the files the index does not
+reference.
+
+## Backups and restore
+
+| State | Lives in | Restore from |
+|---|---|---|
+| The published repository: index and pool | The OSN bucket, under `bioc2u/` | The debs directories: re-upload each distro with `docker compose run --rm <codename>-upload` |
+| Built packages and build state | `BIOC2U_DEBS_ROOT` on the build host | A rebuild, which takes hours. Keep the previous release's directory until the new release is verified |
+| The secret signing key | The keyrings of the operators who publish | An offline, encrypted export: `gpg --export-secret-keys --armor <key id>` |
+| The public key | `bioc2u/bioc2u_key.asc` in the bucket | `gpg --export --armor <key id>`, uploaded to the same path |
+| Container images | GHCR | A run of the container workflow |
+
+Without the secret key, the repository has to move to a new key: generate one,
+replace `bioc2u/bioc2u_key.asc`, and publish; the upload signs the index with
+the new key. Every configured machine then has to fetch the new public key, the
+same way `apt_setup.sh` does:
+
+```bash
+sudo curl -o /etc/apt/trusted.gpg.d/bioc2u_key.asc \
+  https://mghp.osn.xsede.org/bir190004-bucket01/bioc2u/bioc2u_key.asc
+```
+
+To roll the repository back to the previous release, re-upload that release's
+debs directory: without `--preserve-versions`, `deb-s3` replaces each package's
+index entry with the uploaded version. Machines that already upgraded keep the
+newer packages; apt does not downgrade on its own.
+
 ## Known gaps
 
 **Failed packages are invisible after the fact.** `make_deb.sh` files a package

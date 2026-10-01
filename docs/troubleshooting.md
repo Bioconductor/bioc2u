@@ -70,7 +70,7 @@ Rscript -e 'bspm::disable(); BiocManager::install("<Package>")'
 ```
 
 Maintainers: rebuild it, or remove it from the index
-([operations.md](operations.md)).
+([operations.md](operations.md#removing-packages-the-current-release-does-not-build)).
 
 ### apt installs a package from r2u or Ubuntu instead of bioc2u
 
@@ -261,4 +261,5 @@ curl -s https://mghp.osn.xsede.org/bir190004-bucket01/bioc2u/dists/jammy/release
   | grep -c '^Package:'
 ```
 
-Nothing monitors this; see [operations.md](operations.md#known-gaps).
+Nothing monitors this automatically; see
+[operations.md](operations.md#health-checks).

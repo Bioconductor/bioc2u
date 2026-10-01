@@ -14,7 +14,7 @@ maintain it.
 |---|---|
 | [architecture.md](architecture.md) | What bioc2u is made of, how it relates to r2u, and where the `.deb` packages come from |
 | [deployment.md](deployment.md) | Using bioc2u, building the container images, running your own apt repository |
-| [operations.md](operations.md) | Publishing a build, the BiocVersion seed, the tagging scheme |
+| [operations.md](operations.md) | Publishing a build, the BiocVersion seed, the tagging scheme, health checks, backups |
 | [troubleshooting.md](troubleshooting.md) | Symptom → cause → fix, for users and for maintainers |
 | [security.md](security.md) | The signing key, the apt pin, and what installing from this repository means |
 | [examples/](examples/) | Worked setups: CI, a Dockerfile, a bare Ubuntu machine, pinning |
