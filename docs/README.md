@@ -8,6 +8,19 @@ container to pull, how to set up the repository on your own Ubuntu machine, how
 to install packages. Everything here is for the people who build, publish and
 maintain it.
 
+## Quick facts
+
+| | |
+|---|---|
+| apt repository | `https://mghp.osn.xsede.org/bir190004-bucket01/bioc2u/`: suites `jammy` and `noble`, component `release`, `amd64` and architecture-independent packages |
+| Signing key | `https://mghp.osn.xsede.org/bir190004-bucket01/bioc2u/bioc2u_key.asc` |
+| Container images | `ghcr.io/bioconductor/bioc2u-user`, `ghcr.io/bioconductor/bioc2u-builder`; jammy amd64, noble amd64 and arm64 |
+| Current release | Bioconductor 3.23 on R 4.6.1 |
+| Image builds | GitHub Actions, `.github/workflows/build_ghcr.yaml`, on a schedule and on demand |
+| Package builds | `build/`, Docker Compose on an operator's host; publishing is manual and signed |
+| Hosting | An Open Storage Network (OSN) S3 bucket for the repository, GHCR for the images |
+| Depends on | r2u (CRAN binaries and its setup scripts), `ghcr.io/bioconductor/r2u` (builder base, from Bioconductor/r2u), `install_bioc_sysdeps.sh` from Bioconductor/bioconductor_docker |
+
 ## Read in this order
 
 | Document | Answers |
