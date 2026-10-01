@@ -75,14 +75,16 @@ script which will set up the Bioc2u `apt` repository and install R, and basic pa
 
 ```bash
 # Install curl if missing
-apt update -qq
-apt install -y --no-install-recommends curl ca-certificates
+sudo apt update -qq
+sudo apt install -y --no-install-recommends curl ca-certificates
 # Run apt script with specific Bioconductor version
 curl https://raw.githubusercontent.com/Bioconductor/bioc2u/devel/apt_setup.sh | sudo bash -s 3.23
 ```
 
+In a container based on `ubuntu:jammy` or `ubuntu:noble`, which runs as root and has no `sudo`, run the same commands without `sudo`.
+
 After the initial setup, you may use `apt` or `install.packages()` freely. Installing packages through `apt` can be done in any shell session, by using the
-`r-bioc-` prefix and the all-lowercase name of the package, eg `apt install -y r-bioc-genomicranges`. You may alternatively continue to use R traditionally, as you would in any other environment, and observe the speedup resulting from R using the `apt` package manager under the hood.
+`r-bioc-` prefix and the all-lowercase name of the package, eg `sudo apt install -y r-bioc-genomicranges`. You may alternatively continue to use R traditionally, as you would in any other environment, and observe the speedup resulting from R using the `apt` package manager under the hood.
 
 #### Uninstalling
 
