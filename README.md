@@ -109,6 +109,8 @@ sudo apt full-upgrade                  # moves installed packages to the new rel
 Rscript -e 'BiocManager::valid()'      # flags anything left behind
 ```
 
+Re-running the setup adds its repository line a second time, which apt reports as configured multiple times; see [troubleshooting](docs/troubleshooting.md#w-target-packages--is-configured-multiple-times).
+
 To compare before and after, record the package versions: `dpkg -l 'r-bioc-*' 'r-cran-*' > versions.txt`.
 
 ### Building the packages

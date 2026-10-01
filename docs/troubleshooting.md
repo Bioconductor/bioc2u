@@ -18,6 +18,23 @@ In order of likelihood:
 3. **Package not built.** Not every Bioconductor package has a `.deb`. Falling
    back to `BiocManager::install()` works; it compiles from source.
 4. **Unsupported codename.** Jammy and Noble only.
+5. **arm64.** The repository publishes `amd64` and architecture-independent
+   packages only; on arm64, packages with compiled code are not available
+   from it, and `BiocManager::install()` compiles them from source.
+
+### `W: Target Packages (...) is configured multiple times`
+
+```
+W: Target Packages (release/binary-amd64/Packages) is configured multiple times in /etc/apt/sources.list.d/bioc2u.list:1 and /etc/apt/sources.list.d/bioc2u.list:2
+```
+
+`apt_setup.sh` appends its repository line, so running it again, for example
+to move to a new release, adds a second copy. apt carries on; remove the
+duplicate:
+
+```bash
+sudo sort -u -o /etc/apt/sources.list.d/bioc2u.list /etc/apt/sources.list.d/bioc2u.list
+```
 
 ### Nothing installs at all: `r-api-bioc-X but it is not installable`
 
@@ -112,6 +129,39 @@ package from bioc2u (see the pin, above). A `bioc2u-builder` and a
 `bioc2u-user` image can be on different R versions; their tags show which.
 
 ## Maintainers
+
+### The images have not been rebuilt for days
+
+GitHub disables scheduled workflows in a public repository after 60 days
+without repository activity. Check the workflow's state and its last
+scheduled runs:
+
+```bash
+gh api repos/Bioconductor/bioc2u/actions/workflows/build_ghcr.yaml --jq .state
+gh run list --repo Bioconductor/bioc2u --workflow build_ghcr.yaml --event schedule --limit 3
+```
+
+For `disabled_inactivity`, enable it, and start a build:
+
+```bash
+gh workflow enable build_ghcr.yaml --repo Bioconductor/bioc2u
+gh workflow run build_ghcr.yaml --repo Bioconductor/bioc2u --ref devel
+```
+
+If the state is `active` but no scheduled run appears in the last two days,
+the schedule is not firing. Cancel any runs stuck in `queued`, turn the
+workflow off and on, and start a build:
+
+```bash
+gh run list --repo Bioconductor/bioc2u --workflow build_ghcr.yaml --status queued
+gh run cancel <run id> --repo Bioconductor/bioc2u
+gh workflow disable build_ghcr.yaml --repo Bioconductor/bioc2u
+gh workflow enable build_ghcr.yaml --repo Bioconductor/bioc2u
+gh workflow run build_ghcr.yaml --repo Bioconductor/bioc2u --ref devel
+```
+
+Check two days later that a scheduled run is listed (`--event schedule`, as
+above). If none is, push a commit to `devel`.
 
 ### Builder image fails somewhere inside `install_bioc_sysdeps`
 
