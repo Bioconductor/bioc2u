@@ -133,7 +133,7 @@ interrupted run, and publishing the result with `deb-s3`.
 Container images are automatically built every 2 days and pushed to GitHub Container Registry (GHCR). The build process:
 
 - Builds both user and builder containers for Ubuntu Jammy and Noble
-- Supports linux/amd64 platform
+- Builds linux/amd64 images, and linux/arm64 for Noble
 - Automatically extracts R and OS version information for comprehensive tagging
 - Creates multi-platform manifests with various tag combinations
 
