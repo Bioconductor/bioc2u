@@ -8,6 +8,7 @@ Worked setups. Each is complete enough to copy.
 | [GitHub Actions](#github-actions) | Bioconductor CI with binary dependencies |
 | [Bare Ubuntu machine](#a-bare-ubuntu-machine) | Configure a VM or workstation |
 | [Pinning](#pinning-for-reproducibility) | Make a setup reproducible |
+| [Release build host](#a-release-build-host) | Build and publish a release |
 
 ## A Dockerfile built on bioc2u
 
@@ -136,3 +137,46 @@ image *and* record the package versions:
 ```bash
 dpkg -l 'r-bioc-*' 'r-cran-*' > package-versions.txt
 ```
+
+## A release build host
+
+`build/.env` on a host that builds and publishes a release, with the packages
+on an attached volume:
+
+```bash
+R_VERSION=4.6.1
+BIOC_VERSION=3.23
+BIOC2U_DEBS_ROOT=/mnt/bioc2u/debs-3.23
+
+DEBEMAIL=maintainer@bioconductor.org
+DEBFULLNAME=Bioconductor Core Team
+
+DEB_S3_ENDPOINT=https://mghp.osn.xsede.org
+DEB_S3_BUCKET=bir190004-bucket01
+DEB_S3_PREFIX=bioc2u
+DEB_S3_COMPONENT=release
+GPG_SIGN_KEY=<key id>
+AWS_DIR=/srv/bioc2u/aws
+GNUPG_DIR=/srv/bioc2u/gnupg
+```
+
+Setting `BIOC_VERSION` makes `build_all.sh` refuse a builder image pinned to
+another release, and a directory per release keeps the previous release's
+packages for a rollback. `AWS_DIR` and `GNUPG_DIR` are mounted into the upload
+container, so they point at directories that hold only the bucket's
+credentials and the bioc2u signing key
+([security.md](../security.md#recommended-changes)).
+
+Every built package is also installed in the build containers, under Docker's
+data-root, so put that on the volume too, in `/etc/docker/daemon.json`, and
+restart Docker:
+
+```json
+{
+  "data-root": "/mnt/docker"
+}
+```
+
+`progress.sh` does not read `.env`; watch the build from `build/` with
+`BIOC2U_DEBS_ROOT=/mnt/bioc2u/debs-3.23 bash scripts/progress.sh -w 60`. The
+procedure is in [operations.md](../operations.md#publishing-a-release-build).

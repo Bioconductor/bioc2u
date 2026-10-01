@@ -18,7 +18,7 @@ maintain it.
 | [updating.md](updating.md) | Bioconductor and R releases, Ubuntu codenames, base images, GitHub Actions: cadence, procedure, checks, rollback |
 | [troubleshooting.md](troubleshooting.md) | Symptom → cause → fix, for users and for maintainers |
 | [security.md](security.md) | The signing key, the apt pin, and what installing from this repository means |
-| [examples/](examples/) | Worked setups: CI, a Dockerfile, a bare Ubuntu machine, pinning |
+| [examples/](examples/) | Worked setups: CI, a Dockerfile, a bare Ubuntu machine, pinning, a release build host |
 
 ## Repository layout
 

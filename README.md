@@ -44,7 +44,7 @@ This page covers **using** bioc2u. For maintaining, deploying or adapting it, st
 | [docs/updating.md](docs/updating.md) | Release, R, Ubuntu and base image updates: cadence, procedure, rollback |
 | [docs/troubleshooting.md](docs/troubleshooting.md) | Symptom → cause → fix, for users and maintainers |
 | [docs/security.md](docs/security.md) | The signing key, the apt pin, and what installing from this repository means |
-| [docs/examples/](docs/examples/) | Worked setups: Dockerfile, CI, bare machine, pinning |
+| [docs/examples/](docs/examples/) | Worked setups: Dockerfile, CI, bare machine, pinning, build host |
 
 ### Getting started
 
